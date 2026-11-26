@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carbon Footprint Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+:root{--bg:#e9eee8;--surface:#f7f9f5;--ink:#15251f;--mute:#5d6e66;--line:#cfd8d0;--transport:#2f6690;--food:#b5651d;--home:#6a4c93;--shopping:#2a8c6a;--over:#b3372b;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a16;--surface:#192520;--ink:#e6efe9;--mute:#93a69c;--line:#2b3a33;--transport:#6aa6d4;--food:#e0975a;--home:#a98bd1;--shopping:#5bc9a0;--over:#ef7b6e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101a16;--surface:#192520;--ink:#e6efe9;--mute:#93a69c;--line:#2b3a33;--transport:#6aa6d4;--food:#e0975a;--home:#a98bd1;--shopping:#5bc9a0;--over:#ef7b6e;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 56px}
+h1{font-size:1rem;font-weight:600;margin:0 0 20px;color:var(--mute)}
+.hero{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.big{font-size:clamp(3.6rem,16vw,6.5rem);font-weight:800;letter-spacing:-.04em;line-height:1}
+.unit{font-size:1.15rem;color:var(--mute)}
+.meter{height:14px;border-radius:7px;background:var(--line);margin:18px 0 6px;overflow:hidden;display:flex}
+.meter span{height:100%;transition:width .35s}
+.meter.over{outline:2px solid var(--over)}
+.status{margin:0;color:var(--mute)}
+.status b{color:var(--ink)}
+section{margin-top:34px}
+h2{font-size:1.15rem;font-weight:600;margin:0 0 12px}
+.add{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--surface);padding:16px;border-radius:10px}
+.add label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:4px}
+.add .full{grid-column:1/-1}
+select,input,button{font:inherit;color:var(--ink)}
+select,input{padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);width:100%}
+button.primary{padding:12px;border:0;border-radius:6px;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--transport);outline-offset:2px}
+.hint{font-size:.85rem;color:var(--mute);margin:0}
+ul{list-style:none;margin:0;padding:0}
+li.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.row .t{flex:1;min-width:0}
+.row .t small{display:block;color:var(--mute)}
+.row .kg{font-weight:600;font-variant-numeric:tabular-nums}
+.del{background:none;border:0;color:var(--mute);cursor:pointer;font-size:1.2rem;padding:4px 8px}
+.empty{color:var(--mute);padding:14px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:.9rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.week{display:flex;align-items:flex-end;gap:8px;height:150px;border-bottom:1px solid var(--line);position:relative}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.bar{width:100%;max-width:56px;border-radius:5px 5px 0 0;background:var(--shopping)}
+.bar.over{background:var(--over)}
+.bar.today{outline:2px solid var(--ink);outline-offset:1px}
+.days{display:flex;gap:8px;font-size:.8rem;color:var(--mute);margin-top:6px}
+.days div{flex:1;text-align:center}
+.goal{position:absolute;left:0;right:0;border-top:2px dashed var(--mute);pointer-events:none}
+.goal em{position:absolute;right:0;top:-22px;font-size:.78rem;font-style:normal;color:var(--mute)}
+.tip{background:var(--surface);padding:14px 16px;border-radius:10px;margin-top:18px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px}.seg button{border:0;background:transparent;padding:8px 18px;cursor:pointer;font:inherit;font-weight:600;color:var(--mute)}.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+#bizPanel{display:none;background:var(--surface);padding:16px;border-radius:10px;margin-top:18px}
+details{background:var(--surface);border-radius:10px;padding:12px 16px;margin-bottom:8px}summary{cursor:pointer;font-weight:600}details p{margin:10px 0 0;max-width:68ch}
+details h3{font-size:.95rem;font-weight:600;margin:16px 0 4px}details .ans p{margin:0}details ul{margin:6px 0 0;padding-left:20px;list-style:disc}details li{margin:4px 0}
+@media (max-width:480px){.add{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.meter span{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="seg" role="group" aria-label="Mode"><button id="modeP" aria-pressed="true">Personal</button><button id="modeB" aria-pressed="false">Business</button></div>
+  <h1 id="dateLabel">Today</h1>
+  <div class="hero"><div class="big" id="total">0.0</div><div class="unit">kg CO₂e today</div></div>
+  <div class="meter" id="meter" role="img" aria-label="Share of daily budget used"></div>
+  <p class="status" id="status"></p>
+  <div class="legend" id="legend"></div>
+  <div id="bizPanel">
+    <div class="add" style="padding:0;background:none">
+      <label>Daily budget (kg CO₂e)<input id="budget" type="number" min="1" step="any" inputmode="decimal"></label>
+      <label>Revenue on this date ($)<input id="rev" type="number" min="0" step="any" inputmode="decimal"></label>
+    </div>
+    <p class="status" id="impact" style="margin-top:12px"></p>
+  </div>
+
+  <section>
+    <h2>Log an activity</h2>
+    <div class="add">
+      <label>Category<select id="cat"></select></label>
+      <label>Activity<select id="act"></select></label>
+      <label>Amount <span id="unitLbl"></span><input id="qty" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 12"></label>
+      <label>Date<input id="date" type="date"></label>
+      <p class="hint full" id="preview">Pick an activity and amount to see its footprint.</p>
+      <button class="primary full" id="addBtn">Add to log</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Today’s log</h2>
+    <ul id="list"></ul>
+  </section>
+
+  <section>
+    <h2>Last 7 days</h2>
+    <div class="week" id="week"></div>
+    <div class="days" id="days"></div>
+    <div class="tip" id="tip"></div>
+  </section>
+
+  <section id="brief">
+    <h2>Venture brief</h2>
+    <details><summary>Problem Definition</summary>
+      <h3>1. What sustainability challenge are you trying to solve?</h3>
+      <div class="ans"><p>Individuals and small businesses cannot easily track or reduce their carbon emissions, because current carbon accounting tools are expensive and designed for large enterprises.</p></div>
+      <h3>2. Why is this challenge important locally and globally?</h3>
+      <div class="ans"><p>Locally, energy bills, supply chains, and buyer requirements are creating a greater need for emissions data. Globally, halving emissions this decade to keep warming near 1.5 °C depends heavily on the everyday decisions of ordinary people and smaller firms.</p></div>
+      <h3>3. Which SDGs are addressed?</h3>
+      <div class="ans"><p>This idea directly supports SDG 12 (Responsible Consumption and Production), SDG 13 (Climate Action), SDG 9 (Industry, Innovation and Infrastructure), SDG 8 (Decent Work and Economic Growth), SDG 11 (Sustainable Cities and Communities), and SDG 17 (Partnerships for the Goals).</p></div>
+    </details>
+    <details><summary>Innovation and Sustainability</summary>
+      <h3>4. What makes your idea unique?</h3>
+      <div class="ans"><p><b>Unified tracking.</b> It provides a single platform for personal and business carbon footprints. Emissions are logged by activity (electricity, distribution, marketing, and materials) and shown as changes over time and per dollar of revenue, instead of in a once-a-year report.</p></div>
+      <h3>5. How does it create environmental benefits?</h3>
+      <div class="ans"><p><b>Actionable visibility.</b> Hotspot tips, daily budgets, and trend tracking help users target their biggest emission sources.</p></div>
+      <h3>6. How does it create social benefits?</h3>
+      <div class="ans"><p><b>Democratized access and literacy.</b> It builds climate literacy, involves both staff and customers, and equips small businesses with tools typically reserved for large corporations.</p></div>
+      <h3>7. How does it generate economic value?</h3>
+      <div class="ans">The platform combines sustainability and ESG (Environmental, Social, and Governance) consulting with software. It creates value in three ways:<ul><li><b>Cost reduction:</b> cuts operating expenses by optimizing energy use, shipping logistics (freight), and raw materials.</li><li><b>Compliance and readiness:</b> prepares companies to meet regulatory standards and to satisfy corporate buyers who demand supply-chain sustainability data.</li><li><b>Funding access:</b> helps businesses qualify for green loans, sustainability-linked financing, and government grants.</li></ul></div>
+    </details>
+    <details><summary>Business Model</summary>
+      <h3>8. Who are your customers?</h3>
+      <div class="ans"><p><b>Customer segments:</b> everyday individuals; small and medium-sized businesses (specifically in fashion, retail, food, and logistics); sustainability consultants; and employers or municipalities managing group programs.</p></div>
+      <h3>9. What is your value proposition?</h3>
+      <div class="ans"><p>Users can quickly track, lower, and verify their carbon emissions without hiring a specialist.</p></div>
+      <h3>10. How will you generate revenue?</h3>
+      <div class="ans"><p><b>Revenue streams:</b> a freemium model with a free personal tier, paid business subscriptions (scaled by company size), paid audit-ready reports, and referral commissions from verified emission-reduction partners.</p></div>
+      <h3>11. What are your major costs?</h3>
+      <div class="ans"><p><b>Cost structure:</b> software development and hosting, maintaining up-to-date emission-factor data, verifying methodologies, customer support, and marketing.</p></div>
+    </details>
+    <details><summary>Environmental Assessment</summary>
+      <h3>12. What resources are required?</h3>
+      <div class="ans"><p>The platform relies on digital infrastructure only: cloud hosting, emission-factor databases, and developer hours. No physical hardware is required upfront, although optional smart meters may be integrated later.</p></div>
+      <h3>13. How will you minimize waste and emissions?</h3>
+      <div class="ans"><p><b>Operational sustainability.</b> The platform limits its own digital carbon footprint by using lightweight web pages, hosting data in regions powered by renewable energy, and removing the need for users to buy physical devices for basic tracking.</p></div>
+      <h3>14. What circular economy principles are included?</h3>
+      <div class="ans"><p><b>Circular economy support.</b> The platform helps businesses reduce waste by tracking virgin versus recycled materials, identifying landfill waste, suggesting circular alternatives (reuse, repair, rental, and take-back), and connecting firms with recycling and resale partners.</p></div>
+    </details>
+    <details><summary>Stakeholder Analysis</summary>
+      <h3>15. Who are the key stakeholders?</h3>
+      <div class="ans"><p>Users, employees, suppliers, customers, investors, regulators, NGOs, municipalities, and auditors.</p></div>
+      <h3>16. How will governments, NGOs, and communities support the project?</h3>
+      <div class="ans"><p>Governments can contribute through grants, procurement, and standards. NGOs can assist with methodology reviews, training, and outreach. Communities can participate through local pilots and campaigns.</p></div>
+    </details>
+    <details><summary>Policy and Governance</summary>
+      <h3>17. What regulations or policies affect your idea?</h3>
+      <div class="ans"><p><b>Compliance and rules:</b> carbon pricing, emissions disclosures, supply-chain data requests, environmental-claims (greenwashing) regulations, and user data privacy laws.</p></div>
+      <h3>18. Are there potential green taxes, subsidies, or incentives that could help?</h3>
+      <div class="ans"><p><b>Financial incentives:</b> opportunities vary by region and include carbon-tax savings, energy-efficiency rebates, small-business clean-tech grants, and green loans.</p></div>
+    </details>
+    <details><summary>Impact Assessment</summary>
+      <h3>19. How will success be measured?</h3>
+      <div class="ans"><p>Success is defined by sustained user logging combined with decreasing emissions over time.</p></div>
+      <h3>20. What environmental, social, and economic indicators will be used?</h3>
+      <div class="ans"><ul><li><b>Environmental:</b> kg CO₂e per user, percent change, kg per $1,000 of revenue, and waste diverted.</li><li><b>Social:</b> active users, engaged employees, small businesses reached, and training delivered.</li><li><b>Economic:</b> identified cost savings, subscription revenue, user retention, and grants secured.</li></ul></div>
+    </details>
+    <details><summary>Scaling Strategy</summary>
+      <h3>21. Can the solution be replicated elsewhere?</h3>
+      <div class="ans"><p><b>Adaptability.</b> The tool can be adapted to other industries and regions by updating emission factors, adding languages, and creating industry-specific templates.</p></div>
+      <h3>22. What challenges might arise during implementation?</h3>
+      <div class="ans"><p><b>Challenges and solutions.</b> Key hurdles include data accuracy, the effort of manual logging, greenwashing risks, competing tools, verification funding, and varying regulations. These can be addressed by integrating billing and accounting software and by using a transparent, public methodology.</p></div>
+    </details>
+    <p class="hint"><b>Methodology note:</b> Calculated totals are estimates based on rounded global averages. The 6.3 kg daily budget aligns with the 2.3-tonne annual per-person target associated with the 1.5 °C climate goal.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  var BUDGET = 6.3, mode = 'personal';
+  var PERS = {
+    transport:{name:"Transport",color:"var(--transport)",acts:{
+      car:{n:"Drive a car",u:"km",f:0.17},bus:{n:"Take a bus",u:"km",f:0.10},
+      rail:{n:"Take a train or subway",u:"km",f:0.04},flight:{n:"Fly (short-haul)",u:"km",f:0.15},
+      bike:{n:"Bike or walk",u:"km",f:0}}},
+    food:{name:"Food",color:"var(--food)",acts:{
+      beef:{n:"Beef meal",u:"meals",f:6.0},meat:{n:"Chicken or pork meal",u:"meals",f:1.8},
+      veg:{n:"Vegetarian meal",u:"meals",f:1.0},vegan:{n:"Vegan meal",u:"meals",f:0.6}}},
+    home:{name:"Home energy",color:"var(--home)",acts:{
+      elec:{n:"Electricity",u:"kWh",f:0.12},gas:{n:"Natural gas",u:"m³",f:1.9}}},
+    shopping:{name:"Shopping",color:"var(--shopping)",acts:{
+      cloth:{n:"New clothing",u:"items",f:15},tech:{n:"New small gadget",u:"items",f:30},
+      parcel:{n:"Home delivery",u:"parcels",f:0.5}}}
+  };
+  var BIZ = {
+    energy:{name:'Energy',color:'var(--home)',acts:{elec:{n:'Electricity',u:'kWh',f:0.12},gas:{n:'Natural gas',u:'m³',f:1.9},diesel:{n:'Diesel generator',u:'litres',f:2.7}}},
+    distribution:{name:'Distribution',color:'var(--transport)',acts:{truck:{n:'Truck freight',u:'tonne-km',f:0.1},sea:{n:'Sea freight',u:'tonne-km',f:0.015},air:{n:'Air freight',u:'tonne-km',f:0.6},parcel:{n:'Courier parcels',u:'parcels',f:0.5}}},
+    marketing:{name:'Marketing',color:'var(--food)',acts:{digital:{n:'Digital advertising',u:'$100 spent',f:10},print:{n:'Printed flyers',u:'1,000 sheets',f:8},event:{n:'Event attendance',u:'attendee-days',f:5}}},
+    travel:{name:'Business travel',color:'#d4a017',acts:{flight:{n:'Flight',u:'km',f:0.15},car:{n:'Car trip',u:'km',f:0.17},hotel:{n:'Hotel stay',u:'nights',f:15}}},
+    materials:{name:'Materials',color:'var(--shopping)',acts:{virgin:{n:'Virgin textile or material',u:'kg',f:10},recycled:{n:'Recycled material',u:'kg',f:2},card:{n:'Cardboard packaging',u:'kg',f:0.9}}},
+    waste:{name:'Waste',color:'#8a8f98',acts:{landfill:{n:'Landfilled waste',u:'kg',f:0.5},recycled:{n:'Recycled waste',u:'kg',f:0.05}}}
+  };
+  var CATS = PERS, bizBudget = 150, revs = {};
+  var entries = [];
+  var $ = function(id){return document.getElementById(id)};
+
+  function sk(){ return mode==='business' ? 'carbon-biz-entries' : 'carbon-entries'; }
+  function ld(k,d){ try{ var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; }catch(e){ return d; } }
+  function sv(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  function load(){ entries = ld(sk(), []) || []; }
+  function save(){ sv(sk(), entries); }
+  function ymd(d){ var m=d.getMonth()+1, day=d.getDate(); return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(day<10?"0":"")+day; }
+  function sel(){ return $("date").value || ymd(new Date()); }
+  function fmt(n){ return n.toFixed(1); }
+
+  function fillCats(){
+    $("cat").innerHTML = Object.keys(CATS).map(function(k){return '<option value="'+k+'">'+CATS[k].name+'</option>'}).join("");
+    fillActs();
+  }
+  function fillActs(){
+    var a = CATS[$("cat").value].acts;
+    $("act").innerHTML = Object.keys(a).map(function(k){return '<option value="'+k+'">'+a[k].n+'</option>'}).join("");
+    updateUnit();
+  }
+  function cur(){ var c=$("cat").value, a=$("act").value; return {c:c,a:a,def:CATS[c].acts[a]}; }
+  function updateUnit(){
+    var d = cur().def; $("unitLbl").textContent = "(" + d.u + ")";
+    var q = parseFloat($("qty").value);
+    $("preview").textContent = q>0 ? "That adds about "+fmt(q*d.f)+" kg CO₂e." : "Enter an amount to see its footprint.";
+  }
+  function add(){
+    var q = parseFloat($("qty").value);
+    if(!(q>0)){ $("preview").textContent = "Enter an amount greater than zero."; $("qty").focus(); return; }
+    var x = cur();
+    entries.push({id:Date.now()+Math.random(), date:sel(), cat:x.c, act:x.a, qty:q, kg:q*x.def.f});
+    save(); $("qty").value=""; updateUnit(); render();
+  }
+  function del(id){ entries = entries.filter(function(e){return e.id!==id}); save(); render(); }
+
+  function render(){
+    BUDGET = mode==='business' ? bizBudget : 6.3;
+    var day = sel(), today = entries.filter(function(e){return e.date===day});
+    var total = today.reduce(function(s,e){return s+e.kg},0);
+    var isToday = day===ymd(new Date());
+    $("dateLabel").textContent = isToday ? "Today" : new Date(day+"T12:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+    $("total").textContent = fmt(total);
+    document.querySelector(".unit").textContent = "kg CO₂e " + (isToday?"today":"that day");
+
+    var by = {}; Object.keys(CATS).forEach(function(k){by[k]=0}); today.forEach(function(e){by[e.cat]+=e.kg});
+    var denom = Math.max(total, BUDGET);
+    $("meter").className = "meter" + (total>BUDGET?" over":"");
+    $("meter").innerHTML = Object.keys(CATS).map(function(k){return '<span style="width:'+(by[k]/denom*100)+'%;background:'+CATS[k].color+'"></span>'}).join("");
+    var left = BUDGET-total;
+    $("status").innerHTML = total===0 ? "Daily budget: <b>"+BUDGET+" kg</b>. Nothing logged yet." :
+      left>=0 ? "<b>"+fmt(left)+" kg</b> left in your "+BUDGET+" kg daily budget." :
+      "<b>"+fmt(-left)+" kg</b> over your "+BUDGET+" kg daily budget.";
+    $("legend").innerHTML = Object.keys(CATS).map(function(k){return '<span><i class="dot" style="background:'+CATS[k].color+'"></i>'+CATS[k].name+' '+fmt(by[k])+'</span>'}).join("");
+
+    $("list").innerHTML = today.length ? today.slice().reverse().map(function(e){
+      var d = CATS[e.cat].acts[e.act];
+      return '<li class="row"><i class="dot" style="background:'+CATS[e.cat].color+'"></i><div class="t">'+d.n+'<small>'+e.qty+' '+d.u+'</small></div><div class="kg">'+fmt(e.kg)+' kg</div><button class="del" data-id="'+e.id+'" aria-label="Delete '+d.n+'">×</button></li>';
+    }).join("") : '<li class="empty">Nothing logged for this day. Add your first activity above.</li>';
+
+    renderWeek(day); renderBiz(day);
+  }
+  function renderBiz(day){
+    var on = mode==='business'; $('bizPanel').style.display = on ? 'block' : 'none';
+    if(!on) return;
+    var end = new Date(day+'T12:00:00'), cw = 0, pw = 0, rv = 0;
+    for(var i=0;i<14;i++){ var d=new Date(end); d.setDate(end.getDate()-i); var k=ymd(d);
+      var t = entries.filter(function(e){return e.date===k}).reduce(function(s,e){return s+e.kg},0);
+      if(i<7){ cw+=t; rv+=(revs[k]||0); } else pw+=t; }
+    var msg = 'Last 7 days: '+fmt(cw)+' kg CO₂e';
+    if(pw>0){ var c=(cw-pw)/pw*100; msg += ', '+(c>=0?'up ':'down ')+Math.abs(c).toFixed(0)+'% on the 7 days before'; }
+    msg += '. At this pace: '+fmt(cw/7*365/1000)+' tonnes a year.';
+    msg += rv>0 ? ' Intensity: '+fmt(cw/rv*1000)+' kg per $1,000 of revenue.' : ' Log daily revenue to see kg per $1,000 sold.';
+    $('impact').textContent = msg;
+    $('rev').value = revs[day] || '';
+    $('budget').value = bizBudget;
+  }
+  function setMode(m){
+    mode = m; CATS = m==='business' ? BIZ : PERS;
+    $('modeP').setAttribute('aria-pressed', String(m==='personal'));
+    $('modeB').setAttribute('aria-pressed', String(m==='business'));
+    load(); fillCats(); render();
+  }
+  function renderWeek(day){
+    var end = new Date(day+"T12:00:00"), cols=[], max=BUDGET;
+    for(var i=6;i>=0;i--){ var d=new Date(end); d.setDate(end.getDate()-i); var k=ymd(d);
+      var t = entries.filter(function(e){return e.date===k}).reduce(function(s,e){return s+e.kg},0);
+      cols.push({k:k,t:t,l:d.toLocaleDateString(undefined,{weekday:"short"})}); max=Math.max(max,t); }
+    max *= 1.1;
+    $("week").innerHTML = '<div class="goal" style="bottom:'+(BUDGET/max*100)+'%"><em>'+BUDGET+' kg budget</em></div>' +
+      cols.map(function(c,i){return '<div class="col"><div class="bar'+(c.t>BUDGET?' over':'')+(i===6?' today':'')+'" title="'+fmt(c.t)+' kg" style="height:'+(c.t/max*100)+'%"></div></div>'}).join("");
+    $("days").innerHTML = cols.map(function(c){return '<div>'+c.l+'<br>'+(c.t?fmt(c.t):"–")+'</div>'}).join("");
+    var sum = cols.reduce(function(s,c){return s+c.t},0), logged = cols.filter(function(c){return c.t>0}).length;
+    var cats = {}; entries.forEach(function(e){ if(cols.some(function(c){return c.k===e.date})) cats[e.cat]=(cats[e.cat]||0)+e.kg; });
+    var top = Object.keys(cats).sort(function(a,b){return cats[b]-cats[a]})[0];
+    $("tip").textContent = !top ? "Log a few days to see which category drives your footprint." :
+      CATS[top].name+" is your biggest source this week ("+fmt(cats[top])+" of "+fmt(sum)+" kg). "+
+      ({transport:"Swapping one short car trip for a bus, bike or walk makes a visible dent.",food:"Replacing a beef meal with a vegetarian one saves about 5 kg.",home:"Cutting standby loads and turning the heat down 1 °C trims home energy.",shopping:"Buying one fewer new item cuts more than most daily habits.",energy:"Switch to a renewable tariff and fix the biggest always-on loads first.",distribution:"Consolidate shipments and move air freight to sea or rail where deadlines allow.",marketing:"Shift spend toward the channels that convert and cut print runs.",travel:"Replace one flight with a video call and book direct routes.",materials:"Swap virgin material for recycled content and cut packaging weight.",waste:"Separate recyclables and reduce offcuts at the design stage."})[top];
+  }
+
+  $('modeP').addEventListener('click', function(){ setMode('personal'); });
+  $('modeB').addEventListener('click', function(){ setMode('business'); });
+  $('budget').addEventListener('change', function(){ var v=parseFloat(this.value); if(v>0){ bizBudget=v; sv('carbon-biz-budget', v); } render(); });
+  $('rev').addEventListener('change', function(){ var v=parseFloat(this.value); if(v>0) revs[sel()]=v; else delete revs[sel()]; sv('carbon-biz-rev', revs); render(); });
+  $("cat").addEventListener("change", fillActs);
+  $("act").addEventListener("change", updateUnit);
+  $("qty").addEventListener("input", updateUnit);
+  $("qty").addEventListener("keydown", function(e){ if(e.key==="Enter") add(); });
+  $("date").addEventListener("change", render);
+  $("addBtn").addEventListener("click", add);
+  $("list").addEventListener("click", function(e){ var id=e.target.getAttribute&&e.target.getAttribute("data-id"); if(id) del(parseFloat(id)); });
+
+  bizBudget = ld('carbon-biz-budget', 150); revs = ld('carbon-biz-rev', {}); load(); fillCats(); $('date').value = ymd(new Date()); render();
+})();
+</script>
+</body>
+</html>
